@@ -1,0 +1,17 @@
+---
+import EntryList from '../../components/EntryList.astro';
+import Garden from '../../components/Garden.astro';
+import Base from '../../layouts/Base.astro';
+import { getProjects } from '../../lib/content';
+
+const projects = await getProjects();
+---
+
+<Base title="Projects" description="Things I've built.">
+  <Garden seed="projects" />
+  <div class="layout">
+    <h1 class="page-title">Projects</h1>
+    {projects.length === 0 && <p class="empty">No projects published yet. Add one to src/content/projects/.</p>}
+  </div>
+  <EntryList entries={projects} base="/projects/" byYear />
+</Base>

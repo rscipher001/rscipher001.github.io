@@ -1,0 +1,896 @@
+@import './fonts.css';
+
+/* ---------------------------------------------------------------------------
+   Tokens: a morning garden (light) and a night garden (dark)
+   ------------------------------------------------------------------------ */
+:root {
+  color-scheme: light;
+  --paper: #edefe7;
+  --paper-deep: #e3e6db;
+  --ink: #262b22;
+  --ink-soft: #596150;
+  --moss: #4a6631;
+  --line: #d6dacd;
+  --rake: #cdd2c3;
+  --stone: #a1a697;
+  --stone-light: #c9cdbf;
+  --mark: rgb(74 102 49 / 0.1);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .04 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  --code-foreground: var(--ink);
+  --code-background: var(--paper-deep);
+  --code-token-keyword: #4a6631;
+  --code-token-string: #72581d;
+  --code-token-string-expression: #72581d;
+  --code-token-function: #356068;
+  --code-token-constant: #8a4536;
+  --code-token-parameter: #3d4437;
+  --code-token-comment: #5a6155;
+  --code-token-punctuation: #596150;
+  --code-token-link: #356068;
+
+  --font-text: 'Fira Sans', system-ui, sans-serif;
+  --font-code: 'Iosevka', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+  --measure: 36rem;
+  --rail: 8.5rem;
+  --gutter: clamp(1rem, 4vw, 3rem);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --paper: #1a1f19;
+    --paper-deep: #222820;
+    --ink: #d9decf;
+    --ink-soft: #a2aa96;
+    --moss: #a6c07a;
+    --line: #2e352c;
+    --rake: #2c332a;
+    --stone: #3e463b;
+    --stone-light: #5a6252;
+    --mark: rgb(166 192 122 / 0.1);
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .03 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    --code-token-keyword: #a6c07a;
+    --code-token-string: #d5ba74;
+    --code-token-string-expression: #d5ba74;
+    --code-token-function: #8ebac0;
+    --code-token-constant: #dd9c88;
+    --code-token-parameter: #c4cab9;
+    --code-token-comment: #8e9784;
+    --code-token-punctuation: #a2aa96;
+    --code-token-link: #8ebac0;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #1a1f19;
+  --paper-deep: #222820;
+  --ink: #d9decf;
+  --ink-soft: #a2aa96;
+  --moss: #a6c07a;
+  --line: #2e352c;
+  --rake: #2c332a;
+  --stone: #3e463b;
+  --stone-light: #5a6252;
+  --mark: rgb(166 192 122 / 0.1);
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .03 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --code-token-keyword: #a6c07a;
+  --code-token-string: #d5ba74;
+  --code-token-string-expression: #d5ba74;
+  --code-token-function: #8ebac0;
+  --code-token-constant: #dd9c88;
+  --code-token-parameter: #c4cab9;
+  --code-token-comment: #8e9784;
+  --code-token-punctuation: #a2aa96;
+  --code-token-link: #8ebac0;
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   ------------------------------------------------------------------------ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  overflow-x: clip;
+  background-color: var(--paper);
+  background-image: var(--grain);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: 1.0625rem;
+  font-weight: 400;
+  line-height: 1.7;
+  font-kerning: normal;
+  -webkit-font-smoothing: antialiased;
+}
+
+@media (min-width: 48rem) {
+  body {
+    font-size: 1.125rem;
+  }
+}
+
+::selection {
+  background: color-mix(in srgb, var(--moss) 24%, transparent);
+}
+
+:focus-visible {
+  outline: 1.5px solid var(--moss);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+a {
+  color: var(--moss);
+  text-decoration-line: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  text-decoration-color: color-mix(in srgb, var(--moss) 35%, transparent);
+  transition: text-decoration-color 0.2s;
+}
+
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
+}
+
+.visually-hidden,
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   Frame: header, footer and the asymmetric reading grid
+   ------------------------------------------------------------------------ */
+.shell {
+  width: 100%;
+  max-width: 72rem;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--gutter);
+  top: -3rem;
+  padding: 0.4rem 0.8rem;
+  background: var(--paper-deep);
+  border-radius: 4px;
+  z-index: 10;
+}
+
+.skip-link:focus {
+  top: 0.75rem;
+}
+
+.site-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 2rem;
+  padding-block: 2rem 1.5rem;
+}
+
+.site-name {
+  color: var(--ink);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-decoration: none;
+}
+
+.site-nav {
+  display: flex;
+  align-items: center;
+  gap: 1.75rem;
+  font-size: 0.95rem;
+}
+
+.site-nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-nav a {
+  color: var(--ink-soft);
+  text-decoration: none;
+}
+
+.site-nav a:hover,
+.site-nav a[aria-current] {
+  color: var(--ink);
+}
+
+.site-nav a[aria-current] {
+  text-decoration: underline;
+  text-decoration-color: var(--stone);
+  text-underline-offset: 0.45em;
+}
+
+.theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin: -0.5rem -0.5rem -0.5rem 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.theme-toggle:hover {
+  color: var(--ink);
+}
+
+.theme-toggle svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.offline-note {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+main {
+  padding-bottom: 6rem;
+}
+
+/* Rail on the left for dates and tags, a single reading column beside it. */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, var(--measure));
+  row-gap: 0.25rem;
+}
+
+@media (min-width: 60rem) {
+  .layout {
+    grid-template-columns: var(--rail) minmax(0, var(--measure));
+    column-gap: 3.5rem;
+  }
+
+  .layout > .rail {
+    grid-column: 1;
+    text-align: right;
+  }
+
+  .layout > :not(.rail) {
+    grid-column: 2;
+  }
+}
+
+.site-footer {
+  padding-bottom: 3rem;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+}
+
+.site-footer > div {
+  padding-top: 1.75rem;
+  border-top: 1px solid var(--line);
+}
+
+.site-footer p {
+  margin: 0;
+  max-width: var(--measure);
+}
+
+.site-footer ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.5rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ---------------------------------------------------------------------------
+   The garden
+   ------------------------------------------------------------------------ */
+.garden {
+  display: block;
+}
+
+.garden path {
+  vector-effect: non-scaling-stroke;
+}
+
+.garden__rake,
+.garden__ring {
+  fill: none;
+  stroke: var(--rake);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+/* Full-bleed bands that dissolve into the paper at their edges. */
+.garden--hero,
+.garden--strip {
+  width: 100vw;
+  max-width: none;
+  margin-inline: calc(50% - 50vw);
+}
+
+.garden--strip {
+  height: clamp(4rem, 7vw, 5.5rem);
+  margin-bottom: 2.75rem;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 25%, #000 85%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 25%, #000 85%, transparent);
+}
+
+.garden--hero {
+  height: clamp(13rem, 34vw, 27rem);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 30%, #000 88%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 30%, #000 88%, transparent);
+}
+
+/* The one moment of motion: the gravel is raked when the home page opens. */
+@media (prefers-reduced-motion: no-preference) {
+  .garden--raking .garden__rake {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: rake 2.4s cubic-bezier(0.4, 0.1, 0.2, 1) forwards;
+    animation-delay: calc(var(--i) * 28ms);
+  }
+
+  .garden--raking .garden__ring,
+  .garden--raking .garden__stone {
+    opacity: 0;
+    animation: settle 1.6s ease-out forwards;
+    animation-delay: calc(0.9s + var(--i) * 90ms);
+  }
+
+  .garden--raking .garden__stone {
+    animation-delay: 0.3s;
+  }
+}
+
+@keyframes rake {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes settle {
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Home
+   ------------------------------------------------------------------------ */
+.hero {
+  position: relative;
+  margin-bottom: 0.5rem;
+}
+
+.hero__text {
+  padding-top: 1.75rem;
+}
+
+@media (min-width: 64rem) {
+  /* The name sits in the garden, on the open gravel to the left of the stones. */
+  .hero {
+    display: grid;
+    align-items: center;
+    margin-bottom: 4rem;
+  }
+
+  .hero > * {
+    grid-area: 1 / 1;
+  }
+
+  .hero__text {
+    padding-top: 0;
+  }
+
+  .hero__text > div {
+    max-width: 26rem;
+    padding: 1.5rem 0;
+    background: radial-gradient(closest-side, var(--paper) 60%, transparent);
+  }
+}
+
+.hero h1,
+.page-title {
+  margin: 0 0 0.6rem;
+  font-size: clamp(2.1rem, 4.4vw, 2.9rem);
+  font-weight: 300;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.lede {
+  margin: 0 0 1rem;
+  color: var(--ink-soft);
+  font-size: 1.15em;
+  font-weight: 300;
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+
+.section-title {
+  margin: 3.5rem 0 1rem;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+/* ---------------------------------------------------------------------------
+   Lists of writing
+   ------------------------------------------------------------------------ */
+.entries {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry {
+  padding-block: 1rem;
+}
+
+.entry .rail,
+.entry__date {
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.entry .rail {
+  padding-top: 0.2rem;
+}
+
+.entry__date {
+  display: block;
+}
+
+.entry__title {
+  color: var(--ink);
+  font-size: 1.05em;
+  font-weight: 500;
+  line-height: 1.4;
+  text-decoration: none;
+}
+
+.entry__title:hover {
+  color: var(--moss);
+}
+
+.entry__desc {
+  margin: 0.2rem 0 0;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+.year + .year {
+  margin-top: 2.5rem;
+}
+
+.year__label {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 1rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 60rem) {
+  .year__label {
+    padding-top: 0.85rem;
+  }
+}
+
+.year .entry:first-child {
+  padding-top: 0.85rem;
+}
+
+.empty {
+  color: var(--ink-soft);
+}
+
+.empty code {
+  font-family: var(--font-code);
+  font-size: 0.9em;
+}
+
+.more {
+  margin-top: 1.25rem;
+  font-size: 0.95rem;
+}
+
+.draft-badge {
+  margin-left: 0.5em;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: 0;
+  vertical-align: middle;
+}
+
+.tag-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.75rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tag-cloud span {
+  color: var(--ink-soft);
+  font-size: 0.85em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------------------
+   Articles
+   ------------------------------------------------------------------------ */
+.article-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem 1.25rem;
+  margin: 0 0 1rem;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.article-meta p,
+.article-meta ul {
+  margin: 0;
+}
+
+.article-meta ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.9rem;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 60rem) {
+  .article-meta {
+    grid-row: 1 / span 2;
+    align-self: start;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2rem;
+    padding-top: 1rem;
+  }
+
+  .article-meta ul {
+    flex-direction: column;
+    align-items: flex-end;
+    margin-top: 0.75rem;
+  }
+}
+
+.article header {
+  margin-bottom: 1.5rem;
+}
+
+.project-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.article-footer {
+  margin-top: 4.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.article-footer nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+}
+
+.article-footer nav a {
+  display: block;
+  max-width: 16rem;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.article-footer nav a:hover {
+  color: var(--moss);
+}
+
+.article-footer nav a[rel='next'] {
+  text-align: right;
+}
+
+.article-footer nav span {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+
+/* ---------------------------------------------------------------------------
+   Prose: the body of posts and pages, from Markdown, MDX or Org
+   ------------------------------------------------------------------------ */
+.prose {
+  overflow-wrap: break-word;
+}
+
+.prose > :first-child {
+  margin-top: 0;
+}
+
+.prose :where(p, ul, ol, dl, table, blockquote) {
+  margin-block: 0 1.2em;
+}
+
+.prose :where(h2, h3, h4) {
+  line-height: 1.3;
+  text-wrap: balance;
+  scroll-margin-top: 1.5rem;
+}
+
+.prose h2 {
+  margin: 2.6em 0 0.7em;
+  font-size: 1.4em;
+  font-weight: 400;
+  letter-spacing: -0.005em;
+}
+
+.prose h3 {
+  margin: 2em 0 0.5em;
+  font-size: 1.1em;
+  font-weight: 500;
+}
+
+.prose h4 {
+  margin: 1.6em 0 0.4em;
+  color: var(--ink-soft);
+  font-size: 1em;
+  font-weight: 500;
+}
+
+.prose :where(ul, ol) {
+  padding-left: 1.3em;
+}
+
+.prose li + li,
+.prose li > :where(ul, ol) {
+  margin-top: 0.35em;
+}
+
+.prose li::marker {
+  color: var(--stone);
+}
+
+.prose strong {
+  font-weight: 500;
+}
+
+.prose blockquote {
+  margin-inline: 0;
+  padding-left: 1.4em;
+  border-left: 1px solid var(--stone);
+  color: var(--ink-soft);
+  font-size: 1.05em;
+  font-style: italic;
+  font-weight: 300;
+}
+
+/* A single small ring instead of a rule. */
+.prose hr {
+  width: 0.6rem;
+  height: 0.6rem;
+  margin: 3em auto;
+  border: 1px solid var(--stone);
+  border-radius: 50%;
+}
+
+.prose :where(img) {
+  display: block;
+  border-radius: 4px;
+}
+
+.prose :where(figure) {
+  margin: 2em 0;
+}
+
+.prose :where(figure:not(.code-block)) > figcaption {
+  margin-top: 0.6em;
+  color: var(--ink-soft);
+  font-size: 0.875rem;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92em;
+  font-variant-numeric: tabular-nums;
+}
+
+.prose :where(th, td) {
+  padding: 0.5em 0.75em 0.5em 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.prose th {
+  font-weight: 500;
+}
+
+.prose kbd {
+  padding: 0.05em 0.4em;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  font-family: var(--font-code);
+  font-size: 0.88em;
+}
+
+.prose :not(pre) > code {
+  padding: 0.08em 0.3em;
+  border-radius: 3px;
+  background: var(--paper-deep);
+  font-family: var(--font-code);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+}
+
+.prose .footnotes {
+  margin-top: 3.5em;
+  padding-top: 1em;
+  border-top: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: 0.9em;
+}
+
+.prose sup a {
+  padding-inline: 0.1em;
+  text-decoration: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Code blocks (see src/lib/code-blocks.ts)
+   ------------------------------------------------------------------------ */
+.code-block {
+  position: relative;
+  margin: 1.8em 0;
+  border-radius: 5px;
+  background: var(--code-background);
+  color: var(--code-foreground);
+}
+
+@media (min-width: 48rem) {
+  .code-block {
+    margin-inline: -1.25rem;
+  }
+}
+
+.code-block__title {
+  margin: 0;
+  padding: 0.55rem 1.25rem 0.5rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-family: var(--font-code);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.code-block__pre {
+  margin: 0;
+  padding-block: 1rem;
+  overflow-x: auto;
+  font-family: var(--font-code);
+  font-size: 0.875rem;
+  line-height: 1.65;
+  tab-size: 2;
+}
+
+@media (min-width: 48rem) {
+  .code-block__pre {
+    font-size: 0.9rem;
+  }
+}
+
+.code-block__pre code {
+  display: grid;
+  min-width: max-content;
+}
+
+.code-block__pre .line {
+  min-height: 1lh;
+  padding-inline: 1.25rem;
+}
+
+.code-block__pre .line.is-marked {
+  background: var(--mark);
+  box-shadow: inset 2px 0 var(--moss);
+}
+
+.code-block__copy {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.5rem;
+  padding: 0.15rem 0.5rem;
+  border: 0;
+  border-radius: 3px;
+  background: var(--code-background);
+  color: var(--ink-soft);
+  font-family: var(--font-text);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.code-block__copy:hover {
+  color: var(--ink);
+}
+
+@media (hover: hover) {
+  .code-block__copy {
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .code-block:hover .code-block__copy,
+  .code-block__copy:focus-visible,
+  .code-block__copy[data-copied] {
+    opacity: 1;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Components for MDX (src/components/mdx)
+   ------------------------------------------------------------------------ */
+.note {
+  margin: 1.8em 0;
+  padding: 1em 1.25em;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--moss) 7%, transparent);
+}
+
+.note > :last-child {
+  margin-bottom: 0;
+}
+
+.note__title {
+  margin: 0 0 0.3em;
+  font-weight: 500;
+}
+
+.note--caution {
+  background: color-mix(in srgb, var(--code-token-constant) 8%, transparent);
+}

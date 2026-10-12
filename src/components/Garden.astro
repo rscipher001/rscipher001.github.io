@@ -1,0 +1,53 @@
+---
+import { hash, makeGarden } from '../lib/garden';
+
+interface Props {
+  /** Any string; the same seed always grows the same garden. */
+  seed: string;
+  /** `hero` for the home page, `strip` for the band above articles. */
+  variant?: 'hero' | 'strip';
+  /** Rake the gravel in on load (once, and only without reduced motion). */
+  animate?: boolean;
+  class?: string;
+}
+
+const { seed, variant = 'strip', animate = false, class: className } = Astro.props;
+const garden =
+  variant === 'hero'
+    ? makeGarden({ seed, width: 1600, height: 440, stones: [0.17, 0.075], gap: 10, zone: [0.62, 0.93] })
+    : makeGarden({ seed, width: 1600, height: 96, stones: [0.2], gap: 8, zone: [0.62, 0.86] });
+const id = `garden-${hash(seed).toString(36)}-${variant}`;
+---
+
+<svg
+  class:list={['garden', `garden--${variant}`, { 'garden--raking': animate }, className]}
+  viewBox={`0 0 ${garden.width} ${garden.height}`}
+  preserveAspectRatio="xMaxYMid slice"
+  aria-hidden="true"
+  focusable="false"
+>
+  <defs>
+    <mask id={`${id}-clearings`} maskUnits="userSpaceOnUse">
+      <rect width={garden.width} height={garden.height} fill="white"></rect>
+      {garden.stones.map((stone) => <path d={stone.clearingPath} fill="black" />)}
+    </mask>
+    <linearGradient id={`${id}-stone`} x1="0.2" y1="0" x2="0.75" y2="1">
+      <stop offset="0" style="stop-color: var(--stone-light)"></stop>
+      <stop offset="1" style="stop-color: var(--stone)"></stop>
+    </linearGradient>
+  </defs>
+
+  <g mask={`url(#${id}-clearings)`}>
+    {garden.lines.map((d, i) => <path class="garden__rake" d={d} pathLength="1" style={`--i:${i}`} />)}
+  </g>
+  {
+    garden.stones.map((stone, s) => (
+      <g>
+        {stone.rings.map((d, r) => (
+          <path class="garden__ring" d={d} style={`--i:${s * 4 + r}`} />
+        ))}
+        <path class="garden__stone" d={stone.body} fill={`url(#${id}-stone)`} />
+      </g>
+    ))
+  }
+</svg>

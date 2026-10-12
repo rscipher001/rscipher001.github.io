@@ -1,0 +1,21 @@
+# build output
+dist/
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+pnpm-debug.log*
+
+# environment variables
+.env
+.env.production
+
+# editors and OS
+.DS_Store
+.idea/
+*~
+\#*\#
+.#*

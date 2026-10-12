@@ -1,0 +1,63 @@
+---
+// A list of posts or projects. `byYear` groups them under a year in the margin.
+import type { CollectionEntry } from 'astro:content';
+import { formatDate, formatShortDate, isoDate } from '../lib/content';
+
+type Entry = CollectionEntry<'posts'> | CollectionEntry<'projects'>;
+
+interface Props {
+  entries: Entry[];
+  /** URL prefix, e.g. "/posts/". */
+  base: string;
+  byYear?: boolean;
+}
+
+const { entries, base, byYear = false } = Astro.props;
+
+const years = new Map<number, Entry[]>();
+for (const entry of entries) {
+  const year = entry.data.date.getUTCFullYear();
+  years.set(year, [...(years.get(year) ?? []), entry]);
+}
+---
+
+{
+  byYear ? (
+    [...years].map(([year, group]) => (
+      <section class="year layout">
+        <h2 class="rail year__label">{year}</h2>
+        <ol class="entries">
+          {group.map((entry) => (
+            <li class="entry">
+              <time class="entry__date" datetime={isoDate(entry.data.date)}>
+                {formatDate(entry.data.date).replace(` ${year}`, '')}
+              </time>
+              <a class="entry__title" href={`${base}${entry.id}/`}>
+                {entry.data.title}
+              </a>
+              {entry.data.draft && <span class="draft-badge">draft</span>}
+              {entry.data.description && <p class="entry__desc">{entry.data.description}</p>}
+            </li>
+          ))}
+        </ol>
+      </section>
+    ))
+  ) : (
+    <ol class="entries">
+      {entries.map((entry) => (
+        <li class="entry layout">
+          <time class="rail" datetime={isoDate(entry.data.date)}>
+            {formatShortDate(entry.data.date)} {entry.data.date.getUTCFullYear()}
+          </time>
+          <div>
+            <a class="entry__title" href={`${base}${entry.id}/`}>
+              {entry.data.title}
+            </a>
+            {entry.data.draft && <span class="draft-badge">draft</span>}
+            {entry.data.description && <p class="entry__desc">{entry.data.description}</p>}
+          </div>
+        </li>
+      ))}
+    </ol>
+  )
+}

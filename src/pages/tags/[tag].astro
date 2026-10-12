@@ -1,0 +1,22 @@
+---
+import EntryList from '../../components/EntryList.astro';
+import Garden from '../../components/Garden.astro';
+import Base from '../../layouts/Base.astro';
+import { getTags } from '../../lib/content';
+
+export async function getStaticPaths() {
+  return (await getTags()).map((tag) => ({ params: { tag: tag.slug }, props: { tag } }));
+}
+
+const { tag } = Astro.props;
+const count = tag.posts.length === 1 ? '1 post' : `${tag.posts.length} posts`;
+---
+
+<Base title={`Tagged ${tag.name}`} description={`${count} tagged ${tag.name}.`}>
+  <Garden seed={`tag-${tag.slug}`} />
+  <div class="layout">
+    <h1 class="page-title">Tagged {tag.name}</h1>
+    <p class="lede">{count}. <a href="/tags/">All tags</a></p>
+  </div>
+  <EntryList entries={tag.posts} base="/posts/" byYear />
+</Base>

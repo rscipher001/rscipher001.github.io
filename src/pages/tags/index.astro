@@ -1,0 +1,27 @@
+---
+import Garden from '../../components/Garden.astro';
+import Base from '../../layouts/Base.astro';
+import { getTags } from '../../lib/content';
+
+const tags = await getTags();
+---
+
+<Base title="Tags" description="Posts grouped by topic.">
+  <Garden seed="tags" />
+  <div class="layout">
+    <h1 class="page-title">Tags</h1>
+    {
+      tags.length ? (
+        <ul class="tag-cloud">
+          {tags.map((tag) => (
+            <li>
+              <a href={`/tags/${tag.slug}/`}>{tag.name}</a> <span>{tag.posts.length}</span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="empty">No tags yet. Add <code>tags</code> to a post's front matter.</p>
+      )
+    }
+  </div>
+</Base>

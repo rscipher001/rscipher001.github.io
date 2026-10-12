@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <style>
+    .ring { fill: none; stroke: #b9beb0; stroke-width: 2; }
+    .top { stop-color: #9aa08f; }
+    .bottom { stop-color: #5f6657; }
+    @media (prefers-color-scheme: dark) {
+      .ring { stroke: #4a5246; }
+      .top { stop-color: #b3baa6; }
+      .bottom { stop-color: #7d8574; }
+    }
+  </style>
+  <defs>
+    <linearGradient id="s" x1="0.2" y1="0" x2="0.75" y2="1">
+      <stop class="top" offset="0" />
+      <stop class="bottom" offset="1" />
+    </linearGradient>
+  </defs>
+  <ellipse class="ring" cx="32" cy="34" rx="29" ry="22" />
+  <path fill="url(#s)" d="M12.5 36.5c-1.2-7.4 7.6-14.6 19.8-14.9 11.6-.3 20.5 5.4 19.7 12.7-.6 5.4-8.9 8.7-19.6 8.6-10.9-.1-19.2-1.8-19.9-6.4Z" />
+</svg>

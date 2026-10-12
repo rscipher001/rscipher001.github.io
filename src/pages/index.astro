@@ -1,0 +1,62 @@
+---
+import EntryList from '../components/EntryList.astro';
+import Garden from '../components/Garden.astro';
+import Base from '../layouts/Base.astro';
+import { getPosts, getProjects } from '../lib/content';
+import { site } from '../site.config';
+
+const posts = (await getPosts()).slice(0, 6);
+const projects = (await getProjects()).slice(0, 3);
+---
+
+<Base>
+  <section class="hero">
+    <Garden seed={site.title} variant="hero" animate />
+    <div class="hero__text layout">
+      <div>
+        <h1>{site.title}</h1>
+        <p class="lede">{site.intro}</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="recent-posts">
+    <div class="layout">
+      <h2 class="section-title" id="recent-posts">Recent posts</h2>
+    </div>
+    {
+      posts.length ? (
+        <EntryList entries={posts} base="/posts/" />
+      ) : (
+        <div class="layout">
+          <p class="empty">Nothing published yet. New posts will appear here.</p>
+        </div>
+      )
+    }
+    {
+      posts.length > 0 && (
+        <div class="layout">
+          <p class="more">
+            <a href="/posts/">All posts</a>
+          </p>
+        </div>
+      )
+    }
+  </section>
+
+  {
+    projects.length > 0 && (
+      <section aria-labelledby="projects">
+        <div class="layout">
+          <h2 class="section-title" id="projects">Projects</h2>
+        </div>
+        <EntryList entries={projects} base="/projects/" />
+        <div class="layout">
+          <p class="more">
+            <a href="/projects/">All projects</a>
+          </p>
+        </div>
+      </section>
+    )
+  }
+</Base>

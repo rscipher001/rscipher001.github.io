@@ -1,0 +1,3 @@
+# pnpm 11 only runs install scripts for packages listed here.
+allowBuilds:
+  sharp: true

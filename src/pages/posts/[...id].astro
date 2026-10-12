@@ -1,0 +1,39 @@
+---
+import { render } from 'astro:content';
+import Article from '../../layouts/Article.astro';
+import { getPosts, readingTime } from '../../lib/content';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post, i) => {
+    const newer = posts[i - 1];
+    const older = posts[i + 1];
+    return {
+      params: { id: post.id },
+      props: {
+        post,
+        newer: newer && { href: `/posts/${newer.id}/`, title: newer.data.title },
+        older: older && { href: `/posts/${older.id}/`, title: older.data.title },
+      },
+    };
+  });
+}
+
+const { post, newer, older } = Astro.props;
+const { Content } = await render(post);
+---
+
+<Article
+  title={post.data.title}
+  description={post.data.description}
+  seed={post.id}
+  date={post.data.date}
+  updated={post.data.updated}
+  readingTime={readingTime(post.body)}
+  tags={post.data.tags}
+  draft={post.data.draft}
+  newer={newer}
+  older={older}
+>
+  <Content />
+</Article>

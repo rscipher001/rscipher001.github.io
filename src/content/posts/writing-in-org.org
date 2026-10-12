@@ -1,0 +1,45 @@
+#+title: Writing posts in Org
+#+description: Org files work as posts too. Keywords at the top replace Markdown front matter.
+#+date: <2026-10-10 Sat>
+#+filetags: :meta:org:
+#+draft: t
+
+Org files in ~src/content/posts/~ are published just like Markdown ones. The keywords at the top of this file set its title, description, date and tags.
+
+* Keywords
+
+| Keyword          | Meaning                                  |
+|------------------+------------------------------------------|
+| ~#+title~        | Post title                               |
+| ~#+description~  | One-sentence summary                     |
+| ~#+date~         | Publish date, e.g. ~<2026-10-10 Sat>~    |
+| ~#+updated~      | Optional date of the last real change    |
+| ~#+filetags~     | Tags, written ~:one:two:~                |
+| ~#+draft~        | ~t~ keeps the post out of the built site |
+
+Top-level headings (~*~) become section headings in the post.
+
+* Code blocks
+
+Source blocks are highlighted the same way as in Markdown. Use the ~:title~ and ~:mark~ header arguments to label a block and highlight lines:
+
+#+begin_src elisp :title init.el :mark 2
+(use-package org
+  :custom (org-hide-emphasis-markers t)
+  :hook (org-mode . visual-line-mode))
+#+end_src
+
+#+begin_src sh
+pnpm dev
+#+end_src
+
+* Everything else
+
+/Emphasis/, *strong text*, =verbatim=, ~code~ and [[https://orgmode.org][links]] all work.
+
+#+begin_quote
+Quote blocks become quotations.
+#+end_quote
+
+- Plain lists
+- work too

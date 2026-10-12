@@ -1,0 +1,14 @@
+---
+// Shown by the service worker for pages that aren't saved on this device yet.
+import Garden from '../components/Garden.astro';
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Not saved yet">
+  <Garden seed="offline" />
+  <div class="layout">
+    <h1 class="page-title">This page isn't saved yet</h1>
+    <p class="lede">You're offline, and this page wasn't saved on this device. It will load once you're back online.</p>
+    <p>Everything else saved on this device still works: <a href="/">home</a>, <a href="/posts/">all posts</a>.</p>
+  </div>
+</Base>

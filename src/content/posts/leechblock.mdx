@@ -1,0 +1,61 @@
+---
+title: A calmer page for LeechBlock
+description: How to point LeechBlock NG at this site's quiet pages, for sites you block and sites you only want to slow down.
+date: 2026-10-12
+tags: [leechblock, focus]
+---
+
+import Note from '../../components/mdx/Note.astro';
+
+[LeechBlock NG](https://www.proginosko.com/leechblock/) is a browser extension that blocks the sites you choose, at the times you choose. When it stops you, it shows a plain page naming the site you were heading to. That does the job, but it feels a bit like walking into a wall.
+
+This site has two pages you can send LeechBlock to instead. Each one draws a quiet scene coloured for the time of day (misty mountains, rain on a pond or a raked garden) with a single quote or reminder. There's a one-minute breathing guide and the sound of rain, and no links onward.
+
+- [`/pause/`](/pause/) is for sites you've blocked.
+- `/delayed/` is for sites you only want to slow down. LeechBlock runs its countdown on the page, then opens the site.
+
+Both work offline once you've opened them, so they appear instantly, even on a poor connection.
+
+## Blocked sites
+
+In LeechBlock's options, pick the block set, find **How to Block**, and enter this as the page to show instead of blocked sites:
+
+```text title="Page for blocked sites"
+https://rscipher001.github.io/pause/#$U
+```
+
+LeechBlock replaces `$U` with the address you tried to open, and the page tells you where you were heading: "You were about to open youtube.com." Everything after the `#` stays in your browser. It's never sent to this site, and the page clears it from the address bar once it has read it.
+
+## Delayed sites
+
+LeechBlock 1.7 and newer can run its delay countdown on a page of your choosing, as long as the page's address contains `lb-custom`. In the block set for the sites you want to slow down, enter this as the page to show:
+
+```text title="Page for delayed sites"
+https://rscipher001.github.io/delayed/lb-custom/?$S&$U
+```
+
+Then set the delay further down the same section, under **Delay access to sites by … seconds when delaying page is used**. LeechBlock's other delay options keep working too: loading the site automatically when the countdown ends, cancelling the countdown if you switch away from the tab, and allowing the site for only a few minutes afterwards.
+
+The page shows the countdown in its own way ("amazon.in opens in 12 seconds", with a thin line filling as the time passes) and offers a way out. **Don't open it** stops the countdown and leaves you on the page. If automatic loading is off, an **Open amazon.in** link appears when the countdown ends.
+
+LeechBlock needs the address in exactly this shape. `$S` is the block set's number and `$U` the address you tried to open, and LeechBlock reads both from the part after the `?`. Because that part is sent to this site, the address you were heading to is sent the first time you open the page, before your browser has saved the page for offline use. Once LeechBlock has read it, the page shortens the address bar to `rscipher001.github.io/delayed/`.
+
+<Note kind="caution" title="In Firefox, let LeechBlock run on websites">
+  Firefox keeps an extension away from websites until you allow it. Without that permission, LeechBlock still sends you to the delayed page but can't run its countdown there, and the page says so. To allow it, open `about:addons`, choose LeechBlock NG, and under **Permissions** turn on **Access your data for all websites**.
+</Note>
+
+## If these pages get blocked too
+
+A block set with broad patterns, such as one that blocks everything except a short list, can end up blocking this site as well. LeechBlock would then keep sending you back to a page it blocks. The pages notice this and say so instead of reloading. To fix it, add this line to the block set's list of sites:
+
+```text title="Sites to block"
++rscipher001.github.io
+```
+
+The `+` makes it an exception, so that block set always lets this site through.
+
+## Before you rely on it
+
+Open [the pause page](/pause/) once while you're online so your browser saves it. After that it opens straight away, with or without a connection, and quietly picks up any changes to this site in the background.
+
+The pages start dark at night or when your system is set to dark, and light otherwise. The half-filled circle in the top corner switches between the two, and your choice is remembered.

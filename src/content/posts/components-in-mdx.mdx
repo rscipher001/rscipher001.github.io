@@ -1,0 +1,43 @@
+---
+title: Using components in MDX
+description: MDX posts can import Astro components and mix them with Markdown.
+date: 2026-10-11
+tags: [meta, mdx]
+draft: true
+---
+
+import Note from '../../components/mdx/Note.astro';
+
+An `.mdx` post is Markdown that can also use components. Import one at the top of the file, then use it like an HTML tag:
+
+```mdx title="src/content/posts/my-post.mdx"
+import Note from '../../components/mdx/Note.astro';
+
+<Note title="Good to know">
+  Markdown works **inside** components too.
+</Note>
+```
+
+Which renders as:
+
+<Note title="Good to know">
+  Markdown works **inside** components too.
+</Note>
+
+<Note kind="caution" title="Careful">
+  This one uses `kind="caution"`.
+</Note>
+
+Code blocks inside components get the same treatment as everywhere else:
+
+<Note title="Run it">
+
+```sh title="terminal"
+pnpm build && pnpm preview
+```
+
+</Note>
+
+## Making your own
+
+Components live in `src/components/mdx/`. Each one is an ordinary Astro component; `Note.astro` is a good one to copy from.

@@ -1,0 +1,103 @@
+---
+import '../styles/global.css';
+import { getProjects } from '../lib/content';
+import { site } from '../site.config';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title, description = site.description } = Astro.props;
+const pageTitle = title ? `${title} | ${site.title}` : site.title;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+
+// Projects join the menu once there is at least one to show.
+const nav = [
+  { label: 'Posts', href: '/posts/' },
+  ...((await getProjects()).length ? [{ label: 'Projects', href: '/projects/' }] : []),
+  { label: 'About', href: '/about/' },
+];
+const current = (href: string) => Astro.url.pathname.startsWith(href);
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="alternate" type="application/rss+xml" title={site.title} href="/rss.xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="theme-color" content="#edefe7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1a1f19" media="(prefers-color-scheme: dark)" />
+    <meta property="og:title" content={title ?? site.title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={site.title} />
+    <slot name="head" />
+    <script is:inline>
+      // Apply a saved theme before the first paint to avoid a flash.
+      try {
+        const theme = localStorage.getItem('theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <div class="shell">
+      <header class="site-header">
+        <a class="site-name" href="/">{site.title}</a>
+        <nav class="site-nav" aria-label="Main">
+          <ul>
+            {
+              nav.map((item) => (
+                <li>
+                  <a href={item.href} aria-current={current(item.href) ? 'page' : undefined}>
+                    {item.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+          <button class="theme-toggle" type="button" aria-label="Switch to dark theme">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
+              <path d="M12 3.5a8.5 8.5 0 0 1 0 17Z" fill="currentColor"></path>
+            </svg>
+          </button>
+        </nav>
+        <p class="offline-note" hidden>You're offline. This is the copy saved on this device.</p>
+      </header>
+    </div>
+
+    <main id="main" class="shell">
+      <slot />
+    </main>
+
+    <footer class="site-footer shell">
+      <div>
+        <p>Made by hand with Astro. After your first visit, the whole site is saved on your device and works offline.</p>
+        <ul>
+          {site.links.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+          <li><a href="/tags/">Tags</a></li>
+        </ul>
+      </div>
+    </footer>
+
+    <script>
+      import { setUpCodeBlocks } from '../scripts/code-blocks';
+      import { setUpOffline } from '../scripts/offline';
+      import { setUpThemeToggle } from '../scripts/theme';
+
+      setUpThemeToggle();
+      setUpCodeBlocks();
+      setUpOffline();
+    </script>
+  </body>
+</html>

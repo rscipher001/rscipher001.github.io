@@ -1,0 +1,17 @@
+---
+import EntryList from '../../components/EntryList.astro';
+import Garden from '../../components/Garden.astro';
+import Base from '../../layouts/Base.astro';
+import { getPosts } from '../../lib/content';
+
+const posts = await getPosts();
+---
+
+<Base title="Posts" description="Everything I've written, newest first.">
+  <Garden seed="posts" />
+  <div class="layout">
+    <h1 class="page-title">Posts</h1>
+    {posts.length === 0 && <p class="empty">Nothing published yet. New posts will appear here.</p>}
+  </div>
+  <EntryList entries={posts} base="/posts/" byYear />
+</Base>

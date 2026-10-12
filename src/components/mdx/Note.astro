@@ -1,0 +1,15 @@
+---
+// A highlighted aside for MDX posts:
+//   <Note title="Good to know">Markdown works inside.</Note>
+interface Props {
+  title?: string;
+  kind?: 'note' | 'caution';
+}
+
+const { title, kind = 'note' } = Astro.props;
+---
+
+<aside class:list={['note', `note--${kind}`]}>
+  {title && <p class="note__title">{title}</p>}
+  <slot />
+</aside>

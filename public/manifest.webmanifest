@@ -1,0 +1,11 @@
+{
+  "name": "RSCipher001",
+  "short_name": "RSCipher001",
+  "description": "Writing, projects and notes by RSCipher001.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#edefe7",
+  "theme_color": "#edefe7",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

@@ -1,0 +1,214 @@
+# What /pause/ shows. Each visit picks one entry at random, skipping the ones shown recently.
+#
+#   kind: quote     text + by
+#   kind: reminder  text
+#   kind: image     src (a file in public/pause/), alt, and an optional caption
+#
+# `id` is any short unique name. `time` (optional) limits an entry to part of the day:
+# morning (5–10), day (10–17), evening (17–22) or night (22–5).
+#
+# Your own words help most. Add the reasons you're doing this, the people you're doing it for,
+# and the things that have helped you before.
+
+# --- Your own (uncomment and edit) -----------------------------------------------------------
+
+# - id: my-why
+#   kind: reminder
+#   text: Write the reason you started here, in your own words.
+
+# - id: my-photo
+#   kind: image
+#   src: /pause/my-photo.jpg
+#   alt: Morning fog over the lake near home
+#   caption: The lake, last October.
+
+# --- Reminders ----------------------------------------------------------------------------------
+
+- id: urge-wave
+  kind: reminder
+  text: An urge is a wave. It rises, peaks and falls, usually within a few minutes. You don't have to do anything except watch it pass.
+
+- id: name-it
+  kind: reminder
+  text: Something felt uncomfortable a moment ago. Can you name it in one word?
+
+- id: halt
+  kind: reminder
+  text: Are you hungry, angry, lonely or tired? Each of those has a better answer than a feed.
+
+- id: play-it-forward
+  kind: reminder
+  text: Picture the next hour if you had gone in. Now picture the next hour if you don't.
+
+- id: this-is-the-practice
+  kind: reminder
+  text: This pause is the practice. You're doing it right now.
+
+- id: not-a-failure
+  kind: reminder
+  text: The urge isn't a failure. It's a signal. Noticing it is the skill.
+
+- id: clear-day
+  kind: reminder
+  text: You set this up on a clear day to look after yourself on a cloudy one. Trust that version of you.
+
+- id: easier-next-time
+  kind: reminder
+  text: Each time you pause instead of pushing through, the next pause gets a little easier.
+
+- id: long-exhale
+  kind: reminder
+  text: Breathe out for longer than you breathe in. Five times. Then decide what's next.
+
+- id: window
+  kind: reminder
+  text: Look out of the nearest window for one minute. Find something that's moving.
+
+- id: step-outside
+  kind: reminder
+  text: Step outside, even just to the door. Feel the air on your face.
+
+- id: water
+  kind: reminder
+  text: Drink a glass of water, slowly.
+
+- id: stretch
+  kind: reminder
+  text: Stand up. Reach your arms over your head, then let your shoulders drop.
+
+- id: cold-water
+  kind: reminder
+  text: Wash your face with cold water. It resets more than you'd expect.
+
+- id: write-it-down
+  kind: reminder
+  text: Write down what you were about to look up. If it still matters tomorrow, it'll still be there.
+
+- id: call-someone
+  kind: reminder
+  text: Message or call someone you like. A real voice beats a feed.
+
+- id: one-song
+  kind: reminder
+  text: Put on one song and do nothing else while it plays.
+
+- id: hands
+  kind: reminder
+  text: Give your hands something real to do. Wash a cup, water a plant, tidy one small thing.
+
+- id: morning-light
+  kind: reminder
+  time: morning
+  text: The first hour sets the tone for the day. Start it with something real. Light, water, a short walk.
+
+- id: evening-wind-down
+  kind: reminder
+  time: evening
+  text: The day is winding down. Let it. Nothing out there needs you tonight.
+
+- id: night-sleep
+  kind: reminder
+  time: night
+  text: It's late. Whatever is on that site will still be there in the morning. Sleep won't wait.
+
+- id: night-lights
+  kind: reminder
+  time: night
+  text: Put the screen face down, dim the lights and let the day end.
+
+# --- Quotes (public-domain texts) ---------------------------------------------------------------
+
+- id: thoreau-simplify
+  kind: quote
+  text: Our life is frittered away by detail. Simplify, simplify.
+  by: Henry David Thoreau, Walden
+
+- id: thoreau-kill-time
+  kind: quote
+  text: As if you could kill time without injuring eternity.
+  by: Henry David Thoreau, Walden
+
+- id: thoreau-deliberately
+  kind: quote
+  text: I went to the woods because I wished to live deliberately.
+  by: Henry David Thoreau, Walden
+
+- id: thoreau-heaven
+  kind: quote
+  text: Heaven is under our feet as well as over our heads.
+  by: Henry David Thoreau, Walden
+
+- id: thoreau-wildness
+  kind: quote
+  text: We need the tonic of wildness.
+  by: Henry David Thoreau, Walden
+
+- id: thoreau-stream
+  kind: quote
+  text: Time is but the stream I go a-fishing in.
+  by: Henry David Thoreau, Walden
+
+- id: thoreau-solitude
+  kind: quote
+  text: I never found the companion that was so companionable as solitude.
+  by: Henry David Thoreau, Walden
+
+- id: wordsworth-world
+  kind: quote
+  text: The world is too much with us; late and soon, getting and spending, we lay waste our powers.
+  by: William Wordsworth
+
+- id: pascal-chamber
+  kind: quote
+  text: All the unhappiness of men arises from one single fact, that they cannot stay quietly in their own chamber.
+  by: Blaise Pascal, Pensées (tr. W. F. Trotter)
+
+- id: seneca-time
+  kind: quote
+  text: Nothing, Lucilius, is ours, except time.
+  by: Seneca, Letters (tr. Richard M. Gummere)
+
+- id: seneca-everywhere
+  kind: quote
+  text: Everywhere means nowhere.
+  by: Seneca, Letters (tr. Richard M. Gummere)
+
+- id: aurelius-retire
+  kind: quote
+  text: Nowhere either with more quiet or more freedom from trouble does a man retire than into his own soul.
+  by: Marcus Aurelius, Meditations (tr. George Long)
+
+- id: muir-walk
+  kind: quote
+  text: In every walk with Nature one receives far more than he seeks.
+  by: John Muir
+
+- id: muir-home
+  kind: quote
+  text: Going to the mountains is going home.
+  by: John Muir, Our National Parks
+
+- id: whitman-loafe
+  kind: quote
+  text: I loafe and invite my soul, I lean and loafe at my ease observing a spear of summer grass.
+  by: Walt Whitman, Song of Myself
+
+- id: james-overlook
+  kind: quote
+  text: The art of being wise is the art of knowing what to overlook.
+  by: William James
+
+- id: emerson-woods
+  kind: quote
+  text: In the woods, we return to reason and faith.
+  by: Ralph Waldo Emerson, Nature
+
+- id: dickinson-nows
+  kind: quote
+  text: Forever is composed of nows.
+  by: Emily Dickinson
+
+- id: laozi-muddy-water
+  kind: quote
+  text: Who can make the muddy water clear? Let it be still, and it will gradually become clear.
+  by: Tao Te Ching, chapter 15 (after James Legge)

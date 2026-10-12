@@ -1,0 +1,13 @@
+---
+import Garden from '../components/Garden.astro';
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Page not found">
+  <Garden seed="404" />
+  <div class="layout">
+    <h1 class="page-title">Page not found</h1>
+    <p class="lede">There's nothing at this address. It may have moved, or the link may have a typo.</p>
+    <p><a href="/">Go to the home page</a> or <a href="/posts/">browse all posts</a>.</p>
+  </div>
+</Base>
