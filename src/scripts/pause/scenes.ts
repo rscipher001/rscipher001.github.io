@@ -232,7 +232,39 @@ const mix = (a: string, b: string, t: number) => {
 const birdColour = (p: Palette) => (depth: number) =>
   p.dark ? mix(p.near, '#000000', 0.3 + depth * 0.3) : mix(p.far, p.near, 0.45 + depth * 0.35);
 
-/** Ridge after ridge, each nearer one darker, with mist pooling in the valleys. */
+/**
+ * A band of valley mist, thicker in places and thinner in others, baked into a strip as wide as the
+ * screen whose two ends match, so laid end to end it can drift sideways for ever.
+ */
+function mistStrip(s: Stage, height: number, colour: string, rand: Rand) {
+  const strip = document.createElement('canvas');
+  strip.width = Math.ceil(s.w * s.dpr);
+  strip.height = Math.ceil(height * s.dpr);
+  const c = strip.getContext('2d')!;
+  c.setTransform(s.dpr, 0, 0, s.dpr, 0, 0);
+  // Rising from the valley floor: fade from the mist's own colour at zero opacity, since
+  // transparent black would leave a grey band.
+  const rising = c.createLinearGradient(0, 0, 0, height);
+  rising.addColorStop(0, colour.replace(/[\d.]+\)$/, '0)'));
+  rising.addColorStop(1, colour);
+  c.fillStyle = rising;
+  c.fillRect(0, 0, s.w, height);
+  // Then thin it in patches: a few slow waves, each a whole number of cycles across the strip.
+  const waves = [1, 2, 3, 5].map((k) => ({ k, phase: rand() * Math.PI * 2, weight: 1 / k }));
+  const total = waves.reduce((sum, wave) => sum + wave.weight, 0);
+  const across = c.createLinearGradient(0, 0, s.w, 0);
+  for (let i = 0; i <= 48; i++) {
+    const u = i / 48;
+    const v = waves.reduce((sum, wave) => sum + wave.weight * Math.sin(2 * Math.PI * wave.k * u + wave.phase), 0) / total;
+    across.addColorStop(u, `rgba(0, 0, 0, ${(0.78 + 0.22 * v).toFixed(3)})`);
+  }
+  c.globalCompositeOperation = 'destination-in';
+  c.fillStyle = across;
+  c.fillRect(0, 0, s.w, height);
+  return strip;
+}
+
+/** Ridge after ridge, each nearer one darker, with mist pooling and drifting in the valleys. */
 function mountains(s: Stage): Scene {
   const { ctx, w, h, p, rand } = s;
   const sun = placeSun(w, h, rand, h * 0.3);
@@ -243,6 +275,8 @@ function mountains(s: Stage): Scene {
   });
 
   const layers = 5;
+  // The mist drifts one way for the whole visit, as if on a faint wind.
+  const wind = rand() < 0.5 ? 1 : -1;
   const ridges = Array.from({ length: layers }, (_, i) => {
     const t = i / (layers - 1);
     const base = h * (0.42 + t * 0.18);
@@ -256,18 +290,13 @@ function mountains(s: Stage): Scene {
       const v = n(offset + (x / w) * scale);
       line.push(base - amp * Math.max(0, v - 0.2) ** 1.4 * 1.9);
     }
-    // Mist rising from the valley behind the next ridge.
+    // Mist rising from the valley behind the next ridge, drifting two to five pixels a second.
     const mistTop = base - amp * 0.6;
     const mistHeight = amp * 0.6 + h * 0.06;
-    let mist: CanvasGradient | undefined;
-    if (i < layers - 1) {
-      mist = ctx.createLinearGradient(0, mistTop, 0, mistTop + mistHeight);
-      // Fade from the mist's own colour at zero opacity; transparent black would leave a grey band.
-      mist.addColorStop(0, p.mist.replace(/[\d.]+\)$/, '0)'));
-      mist.addColorStop(1, p.mist);
-    }
+    const mist = i < layers - 1 ? mistStrip(s, mistHeight, p.mist, rand) : undefined;
+    const drift = wind * (0.0018 + t * 0.0035);
     // How far the ridge rises on a full breath: a few pixels far away, more up close.
-    return { line, fill: mix(p.far, p.near, t ** 1.2), mist, mistTop, mistHeight, rise: h * (0.003 + t * 0.009) };
+    return { line, fill: mix(p.far, p.near, t ** 1.2), mist, mistTop, mistHeight, drift, rise: h * (0.003 + t * 0.009) };
   });
   // Everything that moves lies between the highest peak, fully risen, and the lowest dip of the
   // nearest ridge; below that dip the nearest ridge is one solid colour.
@@ -287,11 +316,15 @@ function mountains(s: Stage): Scene {
       ctx.closePath();
       ctx.fill();
       if (ridge.mist) {
+        // Two copies of the strip end to end, shifted by the drift; whole device pixels only, so
+        // the seam between them never shows.
+        const shift = (((now * ridge.drift) % w) + w) % w;
+        const x = Math.round((shift - w) * s.dpr) / s.dpr;
         ctx.save();
         ctx.translate(0, dy);
         ctx.globalAlpha = 0.8 + 0.2 * breath;
-        ctx.fillStyle = ridge.mist;
-        ctx.fillRect(0, ridge.mistTop, w, ridge.mistHeight);
+        ctx.drawImage(ridge.mist, x, ridge.mistTop, w, ridge.mistHeight);
+        ctx.drawImage(ridge.mist, x + w, ridge.mistTop, w, ridge.mistHeight);
         ctx.restore();
       }
     });
@@ -326,6 +359,8 @@ function pond(s: Stage): Scene {
     ctx.fill();
   };
 
+  const pathBottom = h * 0.66;
+
   // Sky, sun and water never move: one picture, painted once. The water hides the sun's lower glow.
   const backdrop = bake(s, (c) => {
     sky(c, w, p, shore);
@@ -350,7 +385,68 @@ function pond(s: Stage): Scene {
       c.lineTo(x + len, y);
       c.stroke();
     }
+    // A faint column of light on the water under the sun or moon, for the glints to shimmer in.
+    const mid = shore + (pathBottom - shore) * 0.4;
+    const reach = (pathBottom - shore) * 0.65;
+    const across = sun.r * 3;
+    c.save();
+    c.translate(sun.x, mid);
+    c.scale(across / reach, 1);
+    const column = c.createRadialGradient(0, 0, 0, 0, 0, reach);
+    column.addColorStop(0, p.dark ? p.glow + '1c' : '#ffffff66');
+    column.addColorStop(1, p.dark ? p.glow + '00' : '#ffffff00');
+    c.fillStyle = column;
+    c.beginPath();
+    c.arc(0, 0, reach, 0, Math.PI * 2);
+    c.fill();
+    c.restore();
   });
+
+  // A path of light on the water below the sun or moon: short glints, narrow by the far shore and
+  // widening towards you, each slowly brightening and fading on its own few-second rhythm.
+  const glints: { x: number; y: number; len: number; width: number; fade: number; rate: number; phase: number; sway: number }[] = [];
+  for (let k = 0; k < 72; k++) {
+    const d = (k / 71) ** 1.5;
+    const y = shore + 3 + d * (pathBottom - shore - 3);
+    const across = sun.r * (0.8 + d * 5);
+    // Pale daytime water needs more and longer glints for the path to show at all.
+    const count = (p.dark ? 2 : 3) + Math.floor(rand() * 2 + d * 1.5);
+    for (let j = 0; j < count; j++) {
+      // Roughly bell-shaped about the middle of the path.
+      const g = (rand() + rand() + rand() - 1.5) / 1.5;
+      glints.push({
+        x: sun.x + g * across,
+        y,
+        len: (3 + d * 22) * (0.6 + rand() * 0.8) * (p.dark ? 1 : 1.8),
+        width: (p.dark ? 0.8 : 1.1) + d * 1.2,
+        // Brightest in the middle, dimmer towards you, and easing in just below the far shore.
+        fade: (1 - Math.abs(g) * 0.7) * (1 - d * 0.55) * Math.min(1, 0.25 + d * 12),
+        rate: 0.0006 + rand() * 0.0012,
+        phase: rand() * Math.PI * 2,
+        sway: 1 + d * 5,
+      });
+    }
+  }
+  // Moonlight is the moon's own silver; by day the glints are white.
+  const light = p.dark ? p.glow : '#ffffff';
+  const strength = p.dark ? 0.6 : 1;
+  const shine = (now: number) => {
+    ctx.strokeStyle = light;
+    ctx.lineCap = 'round';
+    for (const glint of glints) {
+      const alpha = strength * glint.fade * (0.5 + 0.5 * Math.sin(now * glint.rate + glint.phase)) ** 1.5;
+      if (alpha < 0.02) continue;
+      const x = glint.x + Math.sin(now * glint.rate * 0.6 + glint.phase * 2) * glint.sway;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = glint.width;
+      ctx.beginPath();
+      ctx.moveTo(x - glint.len / 2, glint.y);
+      ctx.lineTo(x + glint.len / 2, glint.y);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    ctx.lineCap = 'butt';
+  };
 
   const drops: Drop[] = [];
   const life = 3200;
@@ -376,10 +472,11 @@ function pond(s: Stage): Scene {
   if (s.still) for (let i = 0; i < 7; i++) spawn(-life * (0.15 + rand() * 0.5));
   let nextDrop = 0;
 
-  // What moves: the treeline and its reflection, and the rain, which lands no lower than 0.62 of
-  // the way down and spreads its rings a little further.
+  // What moves: the treeline and its reflection, the path of light, and the rain, which lands no
+  // lower than 0.62 of the way down and spreads its rings a little further.
   const tallest = Math.max(...trees) * 1.14;
-  const frame = within(s, shore - tallest - 2, h * 0.62 + spread * 1.2 * 0.46 + 2, (now) => {
+  const lowest = Math.max(h * 0.62 + spread * 1.2 * 0.46, pathBottom + 4) + 2;
+  const frame = within(s, shore - tallest - 2, lowest, (now) => {
     copy(s, backdrop);
     const breath = s.breath(now);
     ctx.fillStyle = p.far;
@@ -387,6 +484,7 @@ function pond(s: Stage): Scene {
     ctx.globalAlpha = 0.35;
     treeline(breath, 0.7);
     ctx.globalAlpha = 1;
+    shine(now);
 
     if (!s.still && now >= nextDrop) {
       spawn(now);

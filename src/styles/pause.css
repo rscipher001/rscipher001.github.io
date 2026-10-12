@@ -225,6 +225,37 @@
   opacity: 0.8;
 }
 
+/* After a few minutes on the page, one quiet line about the urge. It opens up room for itself
+   slowly before fading in, so nothing on the page jumps. */
+.pause__later {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+.pause__later p {
+  overflow: hidden;
+  max-width: 34rem;
+  margin: 0;
+  padding-top: 1.25rem;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  text-wrap: pretty;
+}
+
+.pause__later.is-shown {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pause__later {
+    transition:
+      grid-template-rows 2.5s ease-in-out,
+      opacity 3s ease-out 1.5s;
+  }
+}
+
 /* Breathing: the words step back and a ring fills and empties with the breath. */
 .pause__breath {
   position: fixed;
@@ -275,6 +306,7 @@
 .is-breathing .pause__moment,
 .is-breathing .pause__from,
 .is-breathing .pause__countdown,
+.is-breathing .pause__later.is-shown,
 .is-breathing .pause__close {
   opacity: 0.12;
 }

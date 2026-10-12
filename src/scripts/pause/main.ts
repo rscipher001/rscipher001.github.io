@@ -172,7 +172,8 @@ function start() {
   const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // ?at=, ?look=, ?scene= and ?moment= let you preview any combination.
+  // ?at=, ?look=, ?scene= and ?moment= let you preview any combination; ?later= shows the
+  // few-minutes note after that many seconds instead.
   const at = params.get('at') as Period | null;
   const period = at && at in PALETTES ? at : periodOf(new Date());
   const preview = params.get('look');
@@ -353,6 +354,26 @@ function start() {
     air.start(start);
     session = breathe(breath.querySelector('.pause__ring')!, breath.querySelector('.pause__breath-label')!, finish, start);
   });
+
+  // After three minutes here, counting only while the page is in view, one quiet line about the urge:
+  // a prompt to notice it, with no praise and no judgement.
+  const later = $('.pause__later');
+  const wait = (Number(params.get('later')) || 180) * 1000;
+  let seen = 0;
+  let since = document.visibilityState === 'visible' ? performance.now() : undefined;
+  addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') since = performance.now();
+    else if (since !== undefined) {
+      seen += performance.now() - since;
+      since = undefined;
+    }
+  });
+  const watch = setInterval(() => {
+    if (seen + (since === undefined ? 0 : performance.now() - since) < wait) return;
+    clearInterval(watch);
+    later.querySelector('p')!.textContent = 'Three minutes have passed. Notice where the urge is now: rising, steady or easing.';
+    later.classList.add('is-shown');
+  }, 1000);
 
   // Rain.
   const rainButton = $<HTMLButtonElement>('[data-action="rain"]');
