@@ -1,5 +1,7 @@
-// Nature scenes for the pause page, drawn on a canvas. Each visit gets a new one.
+// Nature scenes for the pause page, drawn on a canvas. Each visit gets a new one, and it breathes:
+// slowly on its own, and in time with the breathing guide while that runs.
 import { makeGarden } from '../../lib/garden';
+import { flyBirds } from './birds';
 
 export type Period = 'morning' | 'day' | 'evening' | 'night';
 export type SceneName = 'mountains' | 'pond' | 'garden';
@@ -112,6 +114,66 @@ function noise1d(rand: Rand, octaves: number) {
   };
 }
 
+
+/** How full the scene's breath is at a moment (in performance.now() time): 0 = empty, 1 = full. */
+export type BreathAt = (now: number) => number;
+
+interface Scene {
+  /** Draws one frame. */
+  frame: (now: number) => void;
+  /** Milliseconds between frames: drifting ridges need few, falling rain more. */
+  interval: number;
+  /** The band of sky birds keep to, in scenes that have one, and where the sun or moon is. */
+  sky?: { top: number; bottom: number; glow: { y: number; reach: number } };
+}
+
+interface Stage {
+  ctx: CanvasRenderingContext2D;
+  w: number;
+  h: number;
+  dpr: number;
+  p: Palette;
+  rand: Rand;
+  breath: BreathAt;
+  still: boolean;
+}
+
+/** Paints what never moves once, at full resolution, to be copied into every frame. */
+function bake(s: Stage, draw: (ctx: CanvasRenderingContext2D) => void) {
+  const layer = document.createElement('canvas');
+  layer.width = s.ctx.canvas.width;
+  layer.height = s.ctx.canvas.height;
+  const ctx = layer.getContext('2d')!;
+  ctx.setTransform(s.dpr, 0, 0, s.dpr, 0, 0);
+  draw(ctx);
+  return layer;
+}
+
+function copy(s: Stage, layer: HTMLCanvasElement) {
+  s.ctx.setTransform(1, 0, 0, 1, 0, 0);
+  s.ctx.drawImage(layer, 0, 0);
+  s.ctx.setTransform(s.dpr, 0, 0, s.dpr, 0, 0);
+}
+
+/**
+ * Wraps a frame so that, after the first, it only repaints the band where anything moves; above
+ * and below it the canvas keeps what the first frame drew.
+ */
+function within(s: Stage, top: number, bottom: number, draw: (now: number) => void) {
+  let first = true;
+  return (now: number) => {
+    s.ctx.save();
+    if (!first) {
+      s.ctx.beginPath();
+      s.ctx.rect(0, Math.floor(top), s.w, Math.ceil(bottom - top));
+      s.ctx.clip();
+    }
+    first = false;
+    draw(now);
+    s.ctx.restore();
+  };
+}
+
 function sky(ctx: CanvasRenderingContext2D, w: number, p: Palette, bottom: number) {
   const g = ctx.createLinearGradient(0, 0, 0, bottom);
   g.addColorStop(0, p.skyTop);
@@ -120,16 +182,25 @@ function sky(ctx: CanvasRenderingContext2D, w: number, p: Palette, bottom: numbe
   ctx.fillRect(0, 0, w, bottom);
 }
 
-function sunOrMoon(ctx: CanvasRenderingContext2D, w: number, h: number, p: Palette, rand: Rand, maxY: number) {
+interface Sun {
+  x: number;
+  y: number;
+  r: number;
+}
+
+function placeSun(w: number, h: number, rand: Rand, maxY: number): Sun {
   const r = Math.min(w, h) * 0.035;
-  const x = w * (0.58 + rand() * 0.28);
-  const y = Math.min(maxY, h * (0.14 + rand() * 0.14));
-  const halo = ctx.createRadialGradient(x, y, r, x, y, r * 7);
+  return { x: w * (0.58 + rand() * 0.28), y: Math.min(maxY, h * (0.14 + rand() * 0.14)), r };
+}
+
+function drawSun(ctx: CanvasRenderingContext2D, { x, y, r }: Sun, p: Palette) {
+  const reach = r * 7;
+  const halo = ctx.createRadialGradient(x, y, r, x, y, reach);
   halo.addColorStop(0, p.glow + (p.dark ? '30' : '70'));
   halo.addColorStop(1, p.glow + '00');
   ctx.fillStyle = halo;
   ctx.beginPath();
-  ctx.arc(x, y, r * 7, 0, Math.PI * 2);
+  ctx.arc(x, y, reach, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = p.glow + (p.dark ? 'e6' : 'cc');
   ctx.beginPath();
@@ -153,103 +224,187 @@ const mix = (a: string, b: string, t: number) => {
   return `rgb(${pa.map((v, i) => Math.round(v + (pb[i] - v) * t)).join(', ')})`;
 };
 
+/**
+ * Birds are silhouettes, darker than anything behind them, so they stand out most against the sun
+ * or moon. By day they take the tone of the ridges at their distance; at night they're nearly
+ * black, faint against the dark sky and clear against the moon and its glow.
+ */
+const birdColour = (p: Palette) => (depth: number) =>
+  p.dark ? mix(p.near, '#000000', 0.3 + depth * 0.3) : mix(p.far, p.near, 0.45 + depth * 0.35);
+
 /** Ridge after ridge, each nearer one darker, with mist pooling in the valleys. */
-function mountains(ctx: CanvasRenderingContext2D, w: number, h: number, p: Palette, rand: Rand) {
-  sky(ctx, w, p, h);
-  if (p.dark) stars(ctx, w, h, rand, h * 0.45);
-  sunOrMoon(ctx, w, h, p, rand, h * 0.3);
+function mountains(s: Stage): Scene {
+  const { ctx, w, h, p, rand } = s;
+  const sun = placeSun(w, h, rand, h * 0.3);
+  const backdrop = bake(s, (c) => {
+    sky(c, w, p, h);
+    if (p.dark) stars(c, w, h, rand, h * 0.45);
+    drawSun(c, sun, p);
+  });
 
   const layers = 5;
-  for (let i = 0; i < layers; i++) {
+  const ridges = Array.from({ length: layers }, (_, i) => {
     const t = i / (layers - 1);
     const base = h * (0.42 + t * 0.18);
     const amp = h * (0.22 - t * 0.12);
     const n = noise1d(rand, 5);
     const scale = 2.2 + t * 2.5;
     const offset = rand() * 200;
-
-    ctx.fillStyle = mix(p.far, p.near, t ** 1.2);
-    ctx.beginPath();
-    ctx.moveTo(0, h);
+    const line: number[] = [];
     for (let x = 0; x <= w + 4; x += 4) {
       // Sharpen the noise into peaks and saddles rather than a gentle swell.
       const v = n(offset + (x / w) * scale);
-      const y = base - amp * Math.max(0, v - 0.2) ** 1.4 * 1.9;
-      ctx.lineTo(x, y);
+      line.push(base - amp * Math.max(0, v - 0.2) ** 1.4 * 1.9);
     }
-    ctx.lineTo(w, h);
-    ctx.closePath();
-    ctx.fill();
-
     // Mist rising from the valley behind the next ridge.
+    const mistTop = base - amp * 0.6;
+    const mistHeight = amp * 0.6 + h * 0.06;
+    let mist: CanvasGradient | undefined;
     if (i < layers - 1) {
-      const mist = ctx.createLinearGradient(0, base - amp * 0.6, 0, base + h * 0.06);
+      mist = ctx.createLinearGradient(0, mistTop, 0, mistTop + mistHeight);
       // Fade from the mist's own colour at zero opacity; transparent black would leave a grey band.
       mist.addColorStop(0, p.mist.replace(/[\d.]+\)$/, '0)'));
       mist.addColorStop(1, p.mist);
-      ctx.fillStyle = mist;
-      ctx.fillRect(0, base - amp * 0.6, w, amp * 0.6 + h * 0.06);
     }
-  }
+    // How far the ridge rises on a full breath: a few pixels far away, more up close.
+    return { line, fill: mix(p.far, p.near, t ** 1.2), mist, mistTop, mistHeight, rise: h * (0.003 + t * 0.009) };
+  });
+  // Everything that moves lies between the highest peak, fully risen, and the lowest dip of the
+  // nearest ridge; below that dip the nearest ridge is one solid colour.
+  const top = Math.min(...ridges.map((r) => Math.min(...r.line) - r.rise)) - 2;
+  const bottom = Math.max(...ridges[layers - 1].line) + 2;
+  const frame = within(s, top, bottom, (now) => {
+    copy(s, backdrop);
+    ridges.forEach((ridge, i) => {
+      // The breath reaches each nearer ridge a moment later, like a slow swell coming closer.
+      const breath = s.breath(now - i * 300);
+      const dy = -ridge.rise * breath;
+      ctx.fillStyle = ridge.fill;
+      ctx.beginPath();
+      ctx.moveTo(0, h);
+      ridge.line.forEach((y, k) => ctx.lineTo(k * 4, y + dy));
+      ctx.lineTo(w, h);
+      ctx.closePath();
+      ctx.fill();
+      if (ridge.mist) {
+        ctx.save();
+        ctx.translate(0, dy);
+        ctx.globalAlpha = 0.8 + 0.2 * breath;
+        ctx.fillStyle = ridge.mist;
+        ctx.fillRect(0, ridge.mistTop, w, ridge.mistHeight);
+        ctx.restore();
+      }
+    });
+  });
+  return { frame, interval: 100, sky: { top: h * 0.07, bottom: h * 0.26, glow: { y: sun.y, reach: sun.r * 3 } } };
+}
+
+interface Drop {
+  x: number;
+  y: number;
+  born: number;
+  size: number;
 }
 
 /** A still pond with a far shore; rain lands and spreads in slow rings. */
-function pond(ctx: CanvasRenderingContext2D, w: number, h: number, p: Palette, rand: Rand) {
+function pond(s: Stage): Scene {
+  const { ctx, w, h, p, rand } = s;
   const shore = h * (0.3 + rand() * 0.06);
-  sky(ctx, w, p, shore);
-  if (p.dark) stars(ctx, w, h, rand, shore * 0.8);
-  sunOrMoon(ctx, w, h, p, rand, shore * 0.55);
+  const sun = placeSun(w, h, rand, shore * 0.55);
 
-  // Distant treeline and its soft reflection.
+  // Distant treeline, which swells a little with each breath, and its soft reflection.
   const n = noise1d(rand, 6);
   const offset = rand() * 100;
-  const tree = (x: number) => h * 0.05 * (0.35 + n(offset + (x / w) * 9));
-  ctx.fillStyle = p.far;
-  ctx.beginPath();
-  ctx.moveTo(0, shore);
-  for (let x = 0; x <= w + 3; x += 3) ctx.lineTo(x, shore - tree(x));
-  ctx.lineTo(w, shore);
-  ctx.closePath();
-  ctx.fill();
-
-  const water = ctx.createLinearGradient(0, shore, 0, h);
-  water.addColorStop(0, mix(p.far, p.water, 0.6));
-  water.addColorStop(0.25, p.water);
-  water.addColorStop(1, p.water);
-  ctx.fillStyle = water;
-  ctx.fillRect(0, shore, w, h - shore);
-
-  // Faint glints on the water, packed closer near the far shore.
-  for (let i = 0; i < 90; i++) {
-    const depth = rand() ** 2;
-    const y = shore + 6 + depth * (h * 0.6 - shore);
-    const len = (12 + rand() * 60) * (0.4 + depth);
-    const x = rand() * w;
-    ctx.strokeStyle = p.dark ? 'rgba(210, 225, 215, 0.06)' : 'rgba(255, 255, 255, 0.35)';
-    ctx.lineWidth = 1;
+  const trees: number[] = [];
+  for (let x = 0; x <= w + 3; x += 3) trees.push(h * 0.05 * (0.35 + n(offset + (x / w) * 9)));
+  const treeline = (breath: number, below: number) => {
     ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + len, y);
-    ctx.stroke();
-  }
+    ctx.moveTo(0, shore);
+    trees.forEach((tree, k) => ctx.lineTo(k * 3, shore + below * tree * (1 + 0.14 * breath)));
+    ctx.lineTo(w, shore);
+    ctx.closePath();
+    ctx.fill();
+  };
 
-  ctx.globalAlpha = 0.35;
-  ctx.fillStyle = p.far;
-  ctx.beginPath();
-  ctx.moveTo(0, shore);
-  for (let x = 0; x <= w + 3; x += 3) ctx.lineTo(x, shore + tree(x) * 0.7);
-  ctx.lineTo(w, shore);
-  ctx.closePath();
-  ctx.fill();
-  ctx.globalAlpha = 1;
+  // Sky, sun and water never move: one picture, painted once. The water hides the sun's lower glow.
+  const backdrop = bake(s, (c) => {
+    sky(c, w, p, shore);
+    if (p.dark) stars(c, w, h, rand, shore * 0.8);
+    drawSun(c, sun, p);
+    const g = c.createLinearGradient(0, shore, 0, h);
+    g.addColorStop(0, mix(p.far, p.water, 0.6));
+    g.addColorStop(0.25, p.water);
+    g.addColorStop(1, p.water);
+    c.fillStyle = g;
+    c.fillRect(0, shore, w, h - shore);
+    // Faint glints on the water, packed closer near the far shore.
+    for (let i = 0; i < 90; i++) {
+      const depth = rand() ** 2;
+      const y = shore + 6 + depth * (h * 0.6 - shore);
+      const len = (12 + rand() * 60) * (0.4 + depth);
+      const x = rand() * w;
+      c.strokeStyle = p.dark ? 'rgba(210, 225, 215, 0.06)' : 'rgba(255, 255, 255, 0.35)';
+      c.lineWidth = 1;
+      c.beginPath();
+      c.moveTo(x, y);
+      c.lineTo(x + len, y);
+      c.stroke();
+    }
+  });
 
-  return shore;
+  const drops: Drop[] = [];
+  const life = 3200;
+  const spread = Math.min(w, h) * 0.11;
+  const ring = (d: Drop, now: number) => {
+    for (let k = 0; k < 3; k++) {
+      const t = (now - d.born - k * 260) / life;
+      if (t <= 0 || t >= 1) continue;
+      const depth = (d.y - shore) / (h - shore);
+      const rx = spread * d.size * Math.sqrt(t);
+      ctx.globalAlpha = (1 - t) ** 1.6 * (1 - k * 0.25);
+      ctx.beginPath();
+      ctx.ellipse(d.x, d.y, rx, rx * (0.16 + depth * 0.3), 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+  };
+  const spawn = (born: number) => {
+    const y = shore + (h * 0.62 - shore) * (0.08 + rand() * 0.92);
+    drops.push({ x: rand() * w, y, born, size: 0.6 + rand() * 0.6 });
+  };
+  // Held still, a few rings are caught part of the way out.
+  if (s.still) for (let i = 0; i < 7; i++) spawn(-life * (0.15 + rand() * 0.5));
+  let nextDrop = 0;
+
+  // What moves: the treeline and its reflection, and the rain, which lands no lower than 0.62 of
+  // the way down and spreads its rings a little further.
+  const tallest = Math.max(...trees) * 1.14;
+  const frame = within(s, shore - tallest - 2, h * 0.62 + spread * 1.2 * 0.46 + 2, (now) => {
+    copy(s, backdrop);
+    const breath = s.breath(now);
+    ctx.fillStyle = p.far;
+    treeline(breath, -1);
+    ctx.globalAlpha = 0.35;
+    treeline(breath, 0.7);
+    ctx.globalAlpha = 1;
+
+    if (!s.still && now >= nextDrop) {
+      spawn(now);
+      nextDrop = now + 350 + rand() * 1100;
+    }
+    ctx.strokeStyle = p.ripple;
+    ctx.lineWidth = 1;
+    for (let i = drops.length - 1; i >= 0; i--) {
+      if (!s.still && now - drops[i].born > life + 600) drops.splice(i, 1);
+      else ring(drops[i], now);
+    }
+  });
+  return { frame, interval: 33, sky: { top: h * 0.05, bottom: shore - h * 0.11, glow: { y: sun.y, reach: sun.r * 3 } } };
 }
 
-/** A raked dry garden, the same generator the rest of the site uses. */
-function garden(ctx: CanvasRenderingContext2D, w: number, h: number, p: Palette, seed: string) {
-  ctx.fillStyle = p.ground;
-  ctx.fillRect(0, 0, w, h);
+/** A raked dry garden, the same generator the rest of the site uses; the rings breathe. */
+function garden(s: Stage, seed: string): Scene {
+  const { ctx, w, h, p } = s;
   const m = Math.min(w, h);
   const area = h * 0.72;
   const g = makeGarden({
@@ -261,34 +416,65 @@ function garden(ctx: CanvasRenderingContext2D, w: number, h: number, p: Palette,
     zone: [0.12, 0.88],
   });
 
-  ctx.lineWidth = 1;
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = p.rake;
-  for (const d of g.lines) ctx.stroke(new Path2D(d));
-  for (const stone of g.stones) {
-    ctx.fillStyle = p.ground;
-    ctx.fill(new Path2D(stone.clearingPath));
-    for (const d of stone.rings) ctx.stroke(new Path2D(d));
-    const grad = ctx.createLinearGradient(stone.cx - stone.r * 0.6, stone.cy - stone.r, stone.cx + stone.r * 0.5, stone.cy + stone.r);
-    grad.addColorStop(0, p.stoneLight);
-    grad.addColorStop(1, p.stone);
-    ctx.fillStyle = grad;
-    ctx.fill(new Path2D(stone.body));
-  }
-}
+  const backdrop = bake(s, (c) => {
+    c.fillStyle = p.ground;
+    c.fillRect(0, 0, w, h);
+    c.lineWidth = 1;
+    c.lineCap = 'round';
+    c.strokeStyle = p.rake;
+    for (const d of g.lines) c.stroke(new Path2D(d));
+  });
+  const stones = g.stones.map((stone) => {
+    const shade = ctx.createLinearGradient(stone.cx - stone.r * 0.6, stone.cy - stone.r, stone.cx + stone.r * 0.5, stone.cy + stone.r);
+    shade.addColorStop(0, p.stoneLight);
+    shade.addColorStop(1, p.stone);
+    return {
+      cx: stone.cx,
+      cy: stone.cy,
+      clearing: new Path2D(stone.clearingPath),
+      rings: stone.rings.map((d) => new Path2D(d)),
+      body: new Path2D(stone.body),
+      shade,
+    };
+  });
 
-interface Drop {
-  x: number;
-  y: number;
-  born: number;
-  size: number;
+  const frame = (now: number) => {
+    copy(s, backdrop);
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = p.rake;
+    stones.forEach((stone, i) => {
+      // The raked rings swell outward a little as the garden breathes in, one stone after another.
+      const k = 1 + 0.016 * s.breath(now - i * 450);
+      ctx.save();
+      ctx.translate(stone.cx, stone.cy);
+      ctx.scale(k, k);
+      ctx.translate(-stone.cx, -stone.cy);
+      ctx.lineWidth = 1 / k;
+      ctx.fillStyle = p.ground;
+      ctx.fill(stone.clearing);
+      for (const ring of stone.rings) ctx.stroke(ring);
+      ctx.restore();
+      ctx.fillStyle = stone.shade;
+      ctx.fill(stone.body);
+    });
+  };
+  return { frame, interval: 100 };
 }
 
 /**
- * Draws a scene into the canvas, sized to the window. Returns a function that stops any animation.
- * The rain on the pond is the only motion, and it stays still when reduced motion is preferred.
+ * Draws a scene into the canvas, sized to the window, and keeps it breathing, with birds crossing
+ * its sky on their own canvas. Returns a function that stops the motion. With reduced motion
+ * preferred, it draws a single still frame instead.
  */
-export function paint(canvas: HTMLCanvasElement, name: SceneName, p: Palette, seed: string, still: boolean): () => void {
+export function paint(
+  canvas: HTMLCanvasElement,
+  birdCanvas: HTMLCanvasElement,
+  name: SceneName,
+  p: Palette,
+  seed: string,
+  still: boolean,
+  breath: BreathAt,
+): () => void {
   const ctx = canvas.getContext('2d')!;
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   // Size from the element itself, so the drawing is never stretched to fit.
@@ -307,71 +493,32 @@ export function paint(canvas: HTMLCanvasElement, name: SceneName, p: Palette, se
     return state / 4294967296;
   };
 
-  if (name === 'mountains') {
-    mountains(ctx, w, h, p, rand);
-    return () => {};
-  }
-  if (name === 'garden') {
-    garden(ctx, w, h, p, seed);
-    return () => {};
-  }
-
-  // The pond: paint the still water once, then draw rain on top of a copy of it.
-  const shore = pond(ctx, w, h, p, rand);
-  const base = document.createElement('canvas');
-  base.width = canvas.width;
-  base.height = canvas.height;
-  base.getContext('2d')!.drawImage(canvas, 0, 0);
-
-  const drops: Drop[] = [];
-  const life = 3200;
-  const spread = Math.min(w, h) * 0.11;
-  const ring = (d: Drop, now: number) => {
-    for (let k = 0; k < 3; k++) {
-      const t = (now - d.born - k * 260) / life;
-      if (t <= 0 || t >= 1) continue;
-      const depth = (d.y - shore) / (h - shore);
-      const rx = spread * d.size * Math.sqrt(t);
-      ctx.globalAlpha = (1 - t) ** 1.6 * (1 - k * 0.25);
-      ctx.beginPath();
-      ctx.ellipse(d.x, d.y, rx, rx * (0.16 + depth * 0.3), 0, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
-  };
-  const spawn = (now: number) => {
-    const y = shore + (h * 0.62 - shore) * (0.08 + rand() * 0.92);
-    drops.push({ x: rand() * w, y, born: now, size: 0.6 + rand() * 0.6 });
-  };
-
-  ctx.strokeStyle = p.ripple;
-  ctx.lineWidth = 1;
-
+  const stage: Stage = { ctx, w, h, dpr, p, rand, breath, still };
+  const scene = name === 'mountains' ? mountains(stage) : name === 'pond' ? pond(stage) : garden(stage, seed);
+  const birds = scene.sky && flyBirds(birdCanvas, dpr, { width: w, ...scene.sky, colour: birdColour(p), still });
+  birdCanvas.hidden = !birds;
   if (still) {
-    for (let i = 0; i < 7; i++) {
-      spawn(0);
-      ring(drops[i], life * (0.15 + rand() * 0.5));
-    }
+    scene.frame(0);
+    birds?.(0);
     return () => {};
   }
 
-  let frame = 0;
-  let nextDrop = 0;
+  // Only as many frames as the motion needs: it spares the battery, and the page stays calm.
+  let id = 0;
+  let lastScene = -Infinity;
+  let lastBirds = -Infinity;
   const tick = (now: number) => {
-    if (now >= nextDrop) {
-      spawn(now);
-      nextDrop = now + 350 + rand() * 1100;
+    id = requestAnimationFrame(tick);
+    if (now - lastScene >= scene.interval - 4) {
+      lastScene = now;
+      scene.frame(now);
     }
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.drawImage(base, 0, 0);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.strokeStyle = p.ripple;
-    for (let i = drops.length - 1; i >= 0; i--) {
-      if (now - drops[i].born > life + 600) drops.splice(i, 1);
-      else ring(drops[i], now);
+    if (birds && now - lastBirds >= 29) {
+      lastBirds = now;
+      birds(now);
     }
-    frame = requestAnimationFrame(tick);
   };
-  frame = requestAnimationFrame(tick);
-  return () => cancelAnimationFrame(frame);
+  tick(performance.now());
+  id = requestAnimationFrame(tick);
+  return () => cancelAnimationFrame(id);
 }

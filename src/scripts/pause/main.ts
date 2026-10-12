@@ -4,7 +4,7 @@
 //                         (LeechBlock runs the countdown in this page itself, see leechblock.ts)
 //   /delayed/             what the address bar shows once LeechBlock has read the address above;
 //                         reloading it goes back there. Also forwards the earlier /delayed/#$S&$U.
-import { breathe, type Breathing } from './breathe';
+import { breathe, sceneBreath, type Breathing } from './breathe';
 import { followDelay } from './leechblock';
 import { toggleRain } from './rain';
 import { PALETTES, SCENES, paint, periodOf, type Palette, type Period, type SceneName } from './scenes';
@@ -285,14 +285,17 @@ function start() {
 
   // The backdrop: the visitor's own photo, or a freshly drawn scene.
   const canvas = $<HTMLCanvasElement>('.pause__scene');
+  const birdCanvas = $<HTMLCanvasElement>('.pause__birds');
   const photographed = moment.kind === 'image' && moment.src;
   const requested = params.get('scene') as SceneName | null;
   const scene = requested && SCENES.includes(requested) ? requested : pick(SCENES, (s) => s, 'scenes', 1);
   const seed = String(Math.random());
+  // The scene breathes slowly on its own, and with you while the breathing guide runs.
+  const air = sceneBreath();
   let stopScene = () => {};
   const draw = () => {
     stopScene();
-    if (!photographed) stopScene = paint(canvas, scene, palette, seed, still);
+    if (!photographed) stopScene = paint(canvas, birdCanvas, scene, palette, seed, still, air.at);
   };
 
   if (photographed) {
@@ -338,6 +341,7 @@ function start() {
   let session: Breathing | undefined;
   const finish = (finished: boolean) => {
     session = undefined;
+    air.end(performance.now());
     breatheButton.textContent = 'Breathe for a minute';
     setTimeout(() => document.body.classList.remove('is-breathing'), finished ? 2500 : 0);
   };
@@ -345,7 +349,9 @@ function start() {
     if (session) return session.stop();
     document.body.classList.add('is-breathing');
     breatheButton.textContent = 'Stop';
-    session = breathe(breath.querySelector('.pause__ring')!, breath.querySelector('.pause__breath-label')!, finish);
+    const start = performance.now();
+    air.start(start);
+    session = breathe(breath.querySelector('.pause__ring')!, breath.querySelector('.pause__breath-label')!, finish, start);
   });
 
   // Rain.

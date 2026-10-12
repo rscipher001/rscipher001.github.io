@@ -62,6 +62,8 @@ In Org, use `#+begin_src js :title garden.js :mark 2,4-5`.
 
 `/pause/` is a quiet page to land on instead of a blocked site, and `/delayed/lb-custom/` is its twin for sites you only want to slow down. Each visit draws a new scene (misty mountains, rain on a pond or a raked garden), coloured for the time of day, with one quote, reminder or photo. It never shows the same one twice in a row, and it offers a one-minute breathing guide and the sound of rain. It has no menu and no links onward on purpose.
 
+The scene breathes: the ridges, the treeline or the raked rings rise and settle in the guide's rhythm (four seconds in, six out), a little deeper while the guide runs. Now and then a few birds cross the sky as dark silhouettes, often in front of the sun or moon. With reduced motion turned on in your system settings, the scene stays still. The motion lives in `src/scripts/pause/scenes.ts` and `birds.ts`.
+
 **LeechBlock NG setup.** In LeechBlock's options, for each block set, enter this as the page to show for blocked sites (the first field under "How to Block"):
 
 ```

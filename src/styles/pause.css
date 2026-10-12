@@ -51,6 +51,14 @@
   display: block;
 }
 
+/* Birds fly on their own strip of canvas over the scene; the script sets its top and height. */
+.pause__birds {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+}
+
 .pause__photo {
   object-fit: cover;
 }
