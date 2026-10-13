@@ -13,7 +13,7 @@ const EXTRA_LIMIT = 80;
 const NETWORK_TIMEOUT_MS = 3500;
 const OFFLINE_PAGE = '/offline/';
 // The pages LeechBlock sends you to. They open instantly from the saved copy.
-const QUIET_PAGES = ['/pause/', '/delayed/', '/delayed/lb-custom/'];
+const QUIET_PAGES = ['/pause/', '/pause/lb-custom/', '/delayed/', '/delayed/lb-custom/'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

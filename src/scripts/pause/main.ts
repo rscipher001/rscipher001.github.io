@@ -1,11 +1,13 @@
 // The quiet pages: one calm scene and one moment (a quote, a reminder or a photo) per visit.
-//   /pause/               blocked sites            LeechBlock: /pause/#$U
+//   /pause/               blocked sites            LeechBlock: /pause/#$U (or /pause?$S&$U)
+//   /pause/lb-custom/     blocked sites, saying    LeechBlock: /pause/lb-custom/?$S&$U
+//                         when the block ends
 //   /delayed/lb-custom/   delayed sites            LeechBlock: /delayed/lb-custom/?$S&$U
 //                         (LeechBlock runs the countdown in this page itself, see leechblock.ts)
 //   /delayed/             what the address bar shows once LeechBlock has read the address above;
 //                         reloading it goes back there. Also forwards the earlier /delayed/#$S&$U.
 import { breathe, sceneBreath, type Breathing } from './breathe';
-import { followDelay } from './leechblock';
+import { followBlock, followDelay } from './leechblock';
 import { toggleRain } from './rain';
 import { PALETTES, SCENES, paint, periodOf, type Palette, type Period, type SceneName } from './scenes';
 
@@ -185,11 +187,11 @@ function start() {
   const moment = moments.find((m) => m.id === params.get('moment')) ?? pick(forTime, (m) => m.id, 'recent', 12);
   showMoment(moment);
 
-  // Tidy the address bar so the blocked address isn't kept in history or bookmarks. The delayed page
-  // waits until LeechBlock has read it (see tidyDelayed below).
-  if (mode !== 'delayed' && address.raw) {
-    history.replaceState(null, '', `${location.pathname}${address.options ? `?${address.options}` : ''}`);
-  }
+  // Tidy the address bar so the blocked address isn't kept in history or bookmarks. Pages LeechBlock
+  // reads wait until it has: the delayed page (see tidyDelayed below) and /pause/lb-custom/.
+  const tidy = () => history.replaceState(null, '', `${location.pathname}${address.options ? `?${address.options}` : ''}`);
+  const leechblockReads = mode === 'pause' && location.pathname.includes('lb-custom') && to !== undefined && !to.ours;
+  if (mode !== 'delayed' && address.raw && !leechblockReads) tidy();
   // Landing here again from a tab that's already on this page only changes the #part: start afresh,
   // unless the new address is this site itself (LeechBlock blocking this page; reloading would loop).
   addEventListener('hashchange', () => {
@@ -282,6 +284,12 @@ function start() {
     });
   } else if (to) {
     say(`You were about to open ${to.host}.`);
+    if (leechblockReads) {
+      followBlock((until) => {
+        tidy();
+        if (until) say(`You were about to open ${to.host}. It's closed until ${until}.`);
+      });
+    }
   }
 
   // The backdrop: the visitor's own photo, or a freshly drawn scene.

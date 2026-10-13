@@ -64,6 +64,10 @@ In each block set, under "How to Block", enter the page to show:
 
 - Blocked sites: `https://rscipher001.github.io/pause/#$U`
   - The address after `#` never leaves the browser, and the page clears it from the address bar.
+  - LeechBlock's own shape, `/pause?$S&$U`, works too, but sends the address to GitHub on the first visit.
+- Blocked sites, saying when the block ends (LeechBlock 1.7+): `https://rscipher001.github.io/pause/lb-custom/?$S&$U`
+  - Adds "It's closed until 17:00." when the block has an end (time periods, time limits, certain days); a round-the-clock block shows no time.
+  - Like the delayed page, it needs LeechBlock's website permission (below) and sends the address to GitHub on the first visit.
 - Delayed sites (LeechBlock 1.7+): `https://rscipher001.github.io/delayed/lb-custom/?$S&$U`
   - Keep the block set's delay settings; all of them work (seconds, automatic loading, cancel on leaving the tab, allow for N minutes).
   - `lb-custom` makes LeechBlock run its own countdown in the page, and it reads the set and address after the `?`, so the address reaches GitHub on the very first visit.

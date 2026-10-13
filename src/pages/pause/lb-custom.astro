@@ -1,0 +1,9 @@
+---
+// For blocked sites, when you'd like to know when the block ends.
+// LeechBlock: https://rscipher001.github.io/pause/lb-custom/?$S&$U
+// "lb-custom" in the address makes LeechBlock (1.7+) run its script in this page, which tells it the
+// time the block lifts (see followBlock in leechblock.ts).
+import Quiet from '../../layouts/Quiet.astro';
+---
+
+<Quiet mode="pause" title="Pause" leechblock />

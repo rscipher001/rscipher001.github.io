@@ -1,16 +1,18 @@
 ---
-// The quiet pages LeechBlock sends you to: /pause/ for blocked sites, /delayed/lb-custom/ for
-// delayed ones (LeechBlock runs its countdown inside it), and /delayed/, an earlier address that
-// forwards there. They stand alone on purpose: no menu, no links onward, nothing to scroll.
+// The quiet pages LeechBlock sends you to: /pause/ for blocked sites (or /pause/lb-custom/, where
+// LeechBlock also says when the block ends), /delayed/lb-custom/ for delayed ones (LeechBlock runs
+// its countdown inside it), and /delayed/, an earlier address that forwards there. They stand alone on purpose: no menu, no links onward, nothing to scroll.
 import { getCollection } from 'astro:content';
 import '../styles/pause.css';
 
 interface Props {
   mode: 'pause' | 'delayed' | 'forward';
   title: string;
+  /** The address contains lb-custom, so LeechBlock runs its own script in the page. */
+  leechblock?: boolean;
 }
 
-const { mode, title } = Astro.props;
+const { mode, title, leechblock = false } = Astro.props;
 const moments = (await getCollection('pause')).map(({ id, data }) => ({ id, ...data }));
 const fallback = moments.find((m) => m.kind === 'reminder');
 // Embedded as JSON; escaping "<" keeps any text from closing the script tag early.
@@ -51,6 +53,15 @@ const json = JSON.stringify(moments).replace(/</g, '\\u003c');
 
     <main class="pause__main">
       <p class="pause__from" hidden></p>
+      {
+        mode === 'pause' && leechblock && (
+          <Fragment>
+            {/* LeechBlock writes the blocked address and, if the block ends, when, into these. */}
+            <span id="lbBlockedURL" hidden />
+            <span id="lbUnblockTime" hidden />
+          </Fragment>
+        )
+      }
       {
         mode === 'delayed' && (
           <div class="pause__countdown" hidden>
