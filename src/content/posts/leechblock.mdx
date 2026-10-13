@@ -2,6 +2,7 @@
 title: A calmer page for LeechBlock
 description: How to point LeechBlock NG at this site's quiet pages, for sites you block and sites you only want to slow down.
 date: 2026-10-12
+updated: 2026-10-13
 tags: [leechblock, focus]
 ---
 
@@ -26,6 +27,18 @@ https://rscipher001.github.io/pause/#$U
 
 LeechBlock replaces `$U` with the address you tried to open, and the page tells you where you were heading: "You were about to open youtube.com." Everything after the `#` stays in your browser. It's never sent to this site, and the page clears it from the address bar once it has read it.
 
+LeechBlock uses this page whatever the reason for the block: certain hours, a daily time limit, certain days, or round the clock. Its own default ending, `?$S&$U`, works too (`https://rscipher001.github.io/pause?$S&$U`), but then the address you were heading to is sent to this site the first time you open the page.
+
+## Showing when a block ends
+
+If a block set only blocks at certain hours or after a time limit, the pause page can tell you when the block lifts: "You were about to open youtube.com. It's closed until 7:00 PM." LeechBlock only shares that time with pages whose address contains `lb-custom`, so use this address instead:
+
+```text title="Page for blocked sites, with the end time"
+https://rscipher001.github.io/pause/lb-custom/?$S&$U
+```
+
+LeechBlock gives the time in your own format, with the date if the block lifts on another day. A block that runs round the clock has no end, so there the page simply names the site. Like the delayed page below, this address sends the site you were heading to the first time you open it, and needs LeechBlock's permission to run on websites (see the note below).
+
 ## Delayed sites
 
 LeechBlock 1.7 and newer can run its delay countdown on a page of your choosing, as long as the page's address contains `lb-custom`. In the block set for the sites you want to slow down, enter this as the page to show:
@@ -41,7 +54,7 @@ The page shows the countdown in its own way ("amazon.in opens in 12 seconds", wi
 LeechBlock needs the address in exactly this shape. `$S` is the block set's number and `$U` the address you tried to open, and LeechBlock reads both from the part after the `?`. Because that part is sent to this site, the address you were heading to is sent the first time you open the page, before your browser has saved the page for offline use. Once LeechBlock has read it, the page shortens the address bar to `rscipher001.github.io/delayed/`.
 
 <Note kind="caution" title="In Firefox, let LeechBlock run on websites">
-  Firefox keeps an extension away from websites until you allow it. Without that permission, LeechBlock still sends you to the delayed page but can't run its countdown there, and the page says so. To allow it, open `about:addons`, choose LeechBlock NG, and under **Permissions** turn on **Access your data for all websites**.
+  Firefox keeps an extension away from websites until you allow it. Without that permission, LeechBlock still sends you to the `lb-custom` pages but can't run its script there: the delayed page gets no countdown (and says so), and the pause page can't show when the block ends. To allow it, open `about:addons`, choose LeechBlock NG, and under **Permissions** turn on **Access your data for all websites**.
 </Note>
 
 ## If these pages get blocked too
