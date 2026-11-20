@@ -31,6 +31,32 @@ const json = JSON.stringify(moments).replace(/</g, '\\u003c');
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <script is:inline>
       document.documentElement.classList.add('js');
+      // Choose light or dark before anything is painted, as main.ts will, so a dark visit never
+      // flashes pale first: ?look=, then the remembered choice, then dark at night or on a dark system.
+      // Only the query before a blocked address counts, as in main.ts.
+      (() => {
+        const search = location.search.slice(1);
+        const cut = search.search(/https?(:|%3A)/i);
+        const query = new URLSearchParams(cut >= 0 ? search.slice(0, cut) : search);
+        let look = query.get('look');
+        if (look !== 'light' && look !== 'dark') {
+          try {
+            look = localStorage.getItem('pause:look');
+          } catch {
+            look = null;
+          }
+        }
+        if (look !== 'light' && look !== 'dark') {
+          const at = query.get('at');
+          const hour = new Date().getHours();
+          const night = ['morning', 'day', 'evening', 'night'].includes(at) ? at === 'night' : hour >= 22 || hour < 5;
+          look = night || matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        if (look === 'dark') {
+          document.documentElement.dataset.dark = 'true';
+          document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#0f1626');
+        }
+      })();
     </script>
   </head>
   <body class="pause" data-mode={mode}>

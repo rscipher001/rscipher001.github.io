@@ -8,7 +8,12 @@
   color-scheme: light;
 }
 
+/* A dark visit starts in the night's colours (PALETTES.night in scenes.ts), chosen before the first
+   paint by the inline script in Quiet.astro. */
 :root[data-dark='true'] {
+  --ground: #0f1626;
+  --ink: #dfe3ee;
+  --ink-soft: #a3abc0;
   color-scheme: dark;
 }
 
