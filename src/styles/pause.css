@@ -2,9 +2,9 @@
 
 /* Colours are set by src/scripts/pause/main.ts from the time of day; these are the daytime defaults. */
 :root {
-  --ground: #edefe7;
-  --ink: #262b22;
-  --ink-soft: #596150;
+  --ground: #eef0e6;
+  --ink: #242a26;
+  --ink-soft: #566152;
   color-scheme: light;
 }
 

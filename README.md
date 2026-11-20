@@ -40,6 +40,7 @@ Personal site: writing, projects and pages. Built with [Astro](https://astro.bui
 - `/pause/`: a quiet page to land on instead of a blocked site.
 - `/delayed/lb-custom/`: the same page for sites you only want to slow down.
 - Each visit: a new scene (mountains, pond or raked garden) coloured for the time of day, with one quote or reminder, never the same twice in a row.
+- The scenes are shaded like Japanese woodblock prints: blue and peach at dawn, blue-green by day, apricot and plum in the evening, indigo under the moon at night. The palettes are at the top of `scenes.ts`.
 - A one-minute breathing guide (4 s in, 6 s out) and the sound of rain.
 - No menu and no links onward, on purpose.
 - After one visit online, they open instantly from the device, with or without a connection.
